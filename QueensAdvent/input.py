@@ -6,7 +6,7 @@ def choose(choices, e, text):
     while badResponse:
         try:
             c = input(text)
-            if c in choices or choices == [-1]:
+            if c in choices or choices == [-1] or c.lower() in choices:
                 badResponse = False
                 return c
             else:
