@@ -49,6 +49,7 @@ class Queen:
         self.health = health
         self.barLen = barLen
         self.stage = self.checkStage()
+        self.attacks = self.initAttackDict()
 
     def initialize(self):
         print("The Queen")
@@ -72,6 +73,8 @@ class Queen:
             typing("\"...feel my disdain.\"")
         elif line == 2:
             return "The Queen advances towards you."
+        elif line == 3:
+            return "The Queen scoffs at you."
 
     def checkStage(self):
         if self.health <= round(self.initHealth / 2):
@@ -94,23 +97,81 @@ class Queen:
         return healthBar
 
     def decrHp(self, n):
-        if self.health - n < 0:
+        if self.health - n < 0: # Stops from going beyond 0
             self.health = 0
         else:
             self.health -= n
+        self.checkStage()
         return self.health
 
     def incrHp(self, n):
-        if self.health + n > self.initHealth:
+        if self.health + n > self.initHealth: # Stops from going above max
             self.health = self.initHealth
         else:
             self.health += n
         return self.health
 
+    def makeQTE(self, timing, text, key):
+        start = time.time()
+        end = 0
+        if input(f"{text} [{key.upper()}] ").lower() == key:
+            end = time.time()
+            if (end - start) > timing:
+                outcome = -1
+            else:
+                outcome = 1
+        else:
+            outcome = -1
+        return outcome
+
+    def initAttackDict(self):
+        attacks = [{
+                "name": "Spear Throw (Prepare)",
+                "type": "prepare",
+                "followUp": {
+                    "canFollowUp": True,
+                    "followUpChance": 1,
+                    "followUpAttackId": 1,
+                },
+                "text": "The Queen raises her spear...",
+                "damage": 0, 
+                "id": 0,
+            },{
+                "name": "Spear Throw (Active)",
+                "type": "active",
+                "followUp": {
+                    "canFollowUp": True,
+                    "followUpChance": 0.5,
+                    "followUpAttackId": 2,
+                },
+                "text": "The Queen throws her spear",
+                "damage": 30,
+                "id": 1,
+            },{
+                "name": "Short Blade Slice",
+                "type": "active",
+                "followUp": None,
+                "text": "The Queen slashes her blade",
+                "damage": 10,
+                "id": 2,
+            }]
+        return attacks
+
+    def attack(self, id, feint):
+        if feint:
+            for item in self.attacks:
+                print(item["followUp"] is not None)
+        else:
+            a = self.attacks[id]
+            return a
+
 if chamber() != -1:
     Boss = Queen(100, 20)
-    Boss.dialogue(1)
+    # Boss.dialogue(1)
     Boss.initialize()
+    if Boss.makeQTE(1, "Dodge!", "d") == -1:
+        print("-20")
+    print(Boss.attack(0, True))
     
 
 
