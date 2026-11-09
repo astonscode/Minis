@@ -101,7 +101,7 @@ class Queen:
             self.health = 0
         else:
             self.health -= n
-        self.checkStage()
+        self.stage = self.checkStage()
         return self.health
 
     def incrHp(self, n):
@@ -122,7 +122,7 @@ class Queen:
                 outcome = 1
         else:
             outcome = -1
-        return outcome
+        return outcome      
 
     def initAttackDict(self):
         attacks = [{
@@ -134,6 +134,8 @@ class Queen:
                     "followUpAttackId": 1,
                 },
                 "text": "The Queen raises her spear...",
+                "options": ["Attack", "Dodge", "Wait"],
+                "goodOptions": ["Wait"],
                 "damage": 0, 
                 "id": 0,
             },{
@@ -157,21 +159,33 @@ class Queen:
             }]
         return attacks
 
-    def attack(self, id, feint):
-        if feint:
-            for item in self.attacks:
-                print(item["followUp"] is not None)
+    def outcomeFromAttackChoice(self, id, choice):
+        attack = self.attacks[id]
+        c = attack["options"][int(choice) - 1]
+        if c in attack["goodOptions"]:
+            print(f"{c} Good")
+            return 1
         else:
-            a = self.attacks[id]
-            return a
+            print(f"{c} Bad")
+            return -1
+
+    def attack(self, id):
+        attack = self.attacks[id]
+        print(attack["text"]) # Telegraph
+        print("What do you want to do?") # Ask for choice
+        options = attack["options"]
+        for i in range(len(options)):
+            print(f"[{i+1}] {options[i]}")
+        choices = map(str, list(range(1,4)))
+        choice = choose(list(choices), "Try again.", "> ")
+        return self.outcomeFromAttackChoice(id, choice)
 
 if chamber() != -1:
     Boss = Queen(100, 20)
     # Boss.dialogue(1)
     Boss.initialize()
-    if Boss.makeQTE(1, "Dodge!", "d") == -1:
-        print("-20")
-    print(Boss.attack(0, True))
+    # if Boss.makeQTE(1, "Dodge!", "d") == -1: print("-20")
+    Boss.attack(0)
     
 
 

@@ -10,7 +10,7 @@ def choose(choices, e, text):
                 badResponse = False
                 return c
             else:
-                raise ValueError
+                raise ValueError 
         except ValueError:
             print(e)
             badResponse = True
