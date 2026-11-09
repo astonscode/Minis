@@ -43,7 +43,53 @@ Yet the flame of disdain I hold for this world is nothing but a ember...
 Now, feel my disdain.
 """
 
-class Queen:
+class Player:
+    def __init__(self, health=100, debug=False):
+        self.initHealth = health
+        self.health = health
+        self.choices = []
+        self.describe = []
+        self.initDecisions()
+        self.initOutcomes()
+        self.debug = debug
+
+    def init(self):
+        print("You")
+        print(f"({self.health}) You ready your sword.")
+
+    def initDecisions(self):
+        self.choices += ["Attack", "Dodge", "Wait", "Defend", "Dodge and Attack", "Riposte", "Counterattack"]
+        return self.choices
+
+    def initOutcomes(self):
+        self.describe += ["You swing your sword!", 
+                            "You roll out of the way!", 
+                            "You ready yourself...", 
+                            "You raise your shield.", 
+                            "You roll and jump into the air, swinging your blade down!", 
+                            "You attack the fallen enemy, inflicting massive damage! (massive)", 
+                            "After weaving, you counterattack!"]
+        return self.describe
+
+    def decideFrom(self, attackOptions):
+        for i in range(len(attackOptions)):
+            if attackOptions[i] in self.choices:
+                print(f"[{i+1}] {attackOptions[i]}")
+        choices = list(map(str, list(range(1,len(attackOptions)+1))))
+        choice = int(choose(choices, "Try again.", "> ")) - 1 # translate into list form
+        choiceName = attackOptions[choice]
+        choiceIndex = self.choices.index(choiceName)
+        print(self.describe[choiceIndex])
+        return choiceName
+
+    def decrHp(self, n):
+        if self.health - n < 0: # Stops from going beyond 0
+            self.health = 0
+        else:
+            self.health -= n
+        return self.health
+
+class Boss:
     def __init__(self, health, barLen):
         self.initHealth = health
         self.health = health
@@ -51,7 +97,7 @@ class Queen:
         self.stage = self.checkStage()
         self.attacks = self.initAttackDict()
 
-    def initialize(self):
+    def init(self):
         print("The Queen")
         print(self.genHealthbar())
         print(f"({self.health}) {self.dialogue(2)}")
@@ -74,7 +120,9 @@ class Queen:
         elif line == 2:
             return "The Queen advances towards you."
         elif line == 3:
-            return "The Queen scoffs at you."
+            taunts = ["The Queen scoffs at you.", "The Queen flips her hair.", "\"Don't make me laugh.\"", "\"I would have thought you smarter..\""]
+            r = random.randint(0, len(taunts)-1)
+            return taunts[r]
 
     def checkStage(self):
         if self.health <= round(self.initHealth / 2):
@@ -161,31 +209,30 @@ class Queen:
 
     def outcomeFromAttackChoice(self, id, choice):
         attack = self.attacks[id]
-        c = attack["options"][int(choice) - 1]
-        if c in attack["goodOptions"]:
-            print(f"{c} Good")
-            return 1
+        if choice in attack["goodOptions"]:
+            outcome = -1
         else:
-            print(f"{c} Bad")
-            return -1
+            print(self.dialogue(3))
+            outcome = 1
+        return [outcome, attack["damage"], attack["followUp"]["canFollowUp"]] # gives Queen if outcome is in her favor (1=yes, -1=not), damage she can inflict at this time, and if she can followUp (if outcome is in her favor AND she can followup, she will always followup.)
 
-    def attack(self, id):
+    def attack(self, id, Player, canDodge=True):
         attack = self.attacks[id]
         print(attack["text"]) # Telegraph
-        print("What do you want to do?") # Ask for choice
-        options = attack["options"]
-        for i in range(len(options)):
-            print(f"[{i+1}] {options[i]}")
-        choices = map(str, list(range(1,4)))
-        choice = choose(list(choices), "Try again.", "> ")
-        return self.outcomeFromAttackChoice(id, choice)
-
+        if not canDodge:
+            return self.outcomeFromAttackChoice(id, -1)
+        else:
+            return self.outcomeFromAttackChoice(id, Player.decideFrom(attack["options"])) # Returns a list with outcome
+        
 if chamber() != -1:
-    Boss = Queen(100, 20)
-    # Boss.dialogue(1)
-    Boss.initialize()
-    # if Boss.makeQTE(1, "Dodge!", "d") == -1: print("-20")
-    Boss.attack(0)
+    Queen = Boss(100, 20)
+    You = Player()
+    # Queen.dialogue(1)
+    Queen.init()
+    You.init()
+    print('...')
+    # if Queen.makeQTE(1, "Dodge!", "d") == -1: print("-20")
+    print(Queen.attack(0, You))
     
 
 

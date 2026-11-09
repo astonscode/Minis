@@ -5,6 +5,7 @@ def choose(choices, e, text):
     badResponse = True
     while badResponse:
         try:
+            choices = list(choices)
             c = input(text)
             if c in choices or choices == [-1] or c.lower() in choices:
                 badResponse = False
