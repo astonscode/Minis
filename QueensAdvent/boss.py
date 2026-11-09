@@ -87,10 +87,12 @@ class Player:
             self.health = 0
         else:
             self.health -= n
+        print(f"You took {n} damage. (Health: {self.health})")
         return self.health
 
 class Boss:
-    def __init__(self, health, barLen):
+    def __init__(self, health, barLen, target):
+        self.target = target
         self.initHealth = health
         self.health = health
         self.barLen = barLen
@@ -159,18 +161,20 @@ class Boss:
             self.health += n
         return self.health
 
-    def makeQTE(self, timing, text, key):
+    def makeQTE(self, timing, text, key, damage=5):
         start = time.time()
         end = 0
-        if input(f"{text} [{key.upper()}] ").lower() == key:
+        if input(f"{text} [{key.upper()} + ENTER] ").lower() == key:
             end = time.time()
-            if (end - start) > timing:
+            if (end - start) > timing: # failure
                 outcome = -1
-            else:
+            else: # success
                 outcome = 1
+                print("Dodged!")
+                damage = 0
         else:
             outcome = -1
-        return outcome      
+        return [outcome, damage, None]      
 
     def initAttackDict(self):
         attacks = [{
@@ -194,14 +198,18 @@ class Boss:
                     "followUpChance": 0.5,
                     "followUpAttackId": 2,
                 },
-                "text": "The Queen throws her spear",
+                "text": "The Queen throws her spear!",
+                "options": ["Attack", "Dodge", "Wait"],
+                "goodOptions": ["Dodge"],
                 "damage": 30,
                 "id": 1,
             },{
                 "name": "Short Blade Slice",
                 "type": "active",
                 "followUp": None,
-                "text": "The Queen slashes her blade",
+                "text": "The Queen slashes her blade!",
+                "options": ["Attack", "Dodge", "Wait"],
+                "goodOptions": ["Dodge"],
                 "damage": 10,
                 "id": 2,
             }]
@@ -209,30 +217,45 @@ class Boss:
 
     def outcomeFromAttackChoice(self, id, choice):
         attack = self.attacks[id]
+        damage = attack["damage"]
         if choice in attack["goodOptions"]:
+            damage = 0
             outcome = -1
         else:
-            print(self.dialogue(3))
             outcome = 1
-        return [outcome, attack["damage"], attack["followUp"]["canFollowUp"]] # gives Queen if outcome is in her favor (1=yes, -1=not), damage she can inflict at this time, and if she can followUp (if outcome is in her favor AND she can followup, she will always followup.)
+        return [outcome, damage, attack["followUp"]] # gives Queen if outcome is in her favor (1=yes, -1=not), damage she can inflict at this time, and if she can followUp (if outcome is in her favor AND she can followup, she will always followup.)
 
-    def attack(self, id, Player, canDodge=True):
+    def attack(self, id, canDodge=True):
         attack = self.attacks[id]
         print(attack["text"]) # Telegraph
         if not canDodge:
+            print("You are staggered!")
+            print(self.dialogue(3))
             return self.outcomeFromAttackChoice(id, -1)
         else:
-            return self.outcomeFromAttackChoice(id, Player.decideFrom(attack["options"])) # Returns a list with outcome
-        
+            return self.outcomeFromAttackChoice(id, self.target.decideFrom(attack["options"])) # Returns a list with outcome
+
+    def detNext(self, result):
+        if result[1] != 0:
+            self.target.decrHp(result[1])
+        if result[2] != None:
+            followUp = result[2]
+            if result[0] != -1:
+                self.detNext(self.attack(followUp["followUpAttackId"], False))
+            else:
+                R = random.random()
+                if R < followUp["followUpChance"]:
+                    self.detNext(self.attack(followUp["followUpAttackId"]))
+                else:
+                    print("The Queen falls, exhausted!")
+        return 0
+
 if chamber() != -1:
-    Queen = Boss(100, 20)
     You = Player()
+    Queen = Boss(100, 20, You)
     # Queen.dialogue(1)
     Queen.init()
     You.init()
     print('...')
-    # if Queen.makeQTE(1, "Dodge!", "d") == -1: print("-20")
-    print(Queen.attack(0, You))
-    
-
-
+    Queen.detNext(Queen.makeQTE(1, "Dodge!", "d"))
+    Queen.detNext(Queen.attack(0))
