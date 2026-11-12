@@ -1,0 +1,3 @@
+[Sat Oct 03, 00:50:11] Aston: - Turns: 1 (LOSS on Extreme by Suicide)
+[Sat Oct 03, 00:52:38] Aston WIN vs Extreme by Successful Prediction
+[Sat Oct 03, 00:54:24] Aston WIN vs Extreme by Successful Prediction (Turns: 5)

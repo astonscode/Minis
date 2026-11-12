@@ -89,7 +89,7 @@ class Player:
             self.health -= n
         print(f"You took {n} damage. (Health: {self.health})")
         return self.health
-
+    
 class Boss:
     def __init__(self, health, barLen, target):
         self.target = target
@@ -179,7 +179,6 @@ class Boss:
     def initAttackDict(self):
         attacks = [{
                 "name": "Spear Throw (Prepare)",
-                "type": "prepare",
                 "followUp": {
                     "canFollowUp": True,
                     "followUpChance": 1,
@@ -192,7 +191,6 @@ class Boss:
                 "id": 0,
             },{
                 "name": "Spear Throw (Active)",
-                "type": "active",
                 "followUp": {
                     "canFollowUp": True,
                     "followUpChance": 0.5,
@@ -205,14 +203,37 @@ class Boss:
                 "id": 1,
             },{
                 "name": "Short Blade Slice",
-                "type": "active",
                 "followUp": None,
                 "text": "The Queen slashes her blade!",
                 "options": ["Attack", "Dodge", "Wait"],
                 "goodOptions": ["Dodge"],
                 "damage": 10,
                 "id": 2,
-            }]
+            }, {
+                "name": "Grab (Pre)",
+                "followUp": {
+                    "canFollowUp": True,
+                    "followUpChance": 1,
+                    "followUpAttackId": 4,
+                },
+                "text": "The Queen swings her arm back...",
+                "options": ["Attack", "Dodge", "Wait", "Defend", "Dodge and Attack"],
+                "goodOptions": ["Wait"],
+                "damage": 0,
+                "id": 3,
+            },{
+                "name": "Grab (Active)",
+                "followUp": {
+                    "canFollowUp": True,
+                    "followUpChance": 1,
+                    "followUpAttackId": 4,
+                },
+                "text": "The Queen grabs you.",
+                "options": ["Attack", "Dodge", "Wait", "Defend", "Dodge and Attack"],
+                "goodOptions": ["Dodge", "Dodge and Attack"],
+                "damage": self.target.initHealth, # all your damn health
+                "id": 4,
+            } ]
         return attacks
 
     def outcomeFromAttackChoice(self, id, choice):
@@ -227,6 +248,7 @@ class Boss:
 
     def attack(self, id, canDodge=True):
         attack = self.attacks[id]
+
         print(attack["text"]) # Telegraph
         if not canDodge:
             print("You are staggered!")
@@ -236,6 +258,7 @@ class Boss:
             return self.outcomeFromAttackChoice(id, self.target.decideFrom(attack["options"])) # Returns a list with outcome
 
     def detNext(self, result):
+        # result (list): favor, damage able to be inflicted, follow up ability
         if result[1] != 0:
             self.target.decrHp(result[1])
         if result[2] != None:
@@ -253,7 +276,7 @@ class Boss:
 if chamber() != -1:
     You = Player()
     Queen = Boss(100, 20, You)
-    # Queen.dialogue(1)
+    Queen.dialogue(1)
     Queen.init()
     You.init()
     print('...')
